@@ -65,6 +65,9 @@ export default defineContentScript({
         case 'FOCUS_REMINDER':
           manager.focusReminder(message.payload.id);
           return false;
+        case 'RECENTER_REMINDER':
+          void manager.recenterReminder(message.payload.id);
+          return false;
         case 'PING':
           sendResponse({
             ok: true,

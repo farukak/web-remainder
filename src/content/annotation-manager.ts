@@ -487,9 +487,41 @@ export class AnnotationManager {
     }
     setTimeout(() => {
       this.positionOne(rendered);
-      rendered.node.classList.add('wr-focus');
-      setTimeout(() => rendered.node.classList.remove('wr-focus'), 1900);
+      this.pulse(rendered);
     }, 300);
+  }
+
+  private pulse(rendered: Rendered): void {
+    rendered.node.classList.add('wr-focus');
+    setTimeout(() => rendered.node.classList.remove('wr-focus'), 1900);
+  }
+
+  /** Moves a reminder back to the centre of the current viewport (as a free,
+   *  draggable note) — used to recover a note dragged off-screen. */
+  async recenterReminder(id: string): Promise<void> {
+    const center = {
+      x: Math.round(window.scrollX + window.innerWidth / 2 - 80),
+      y: Math.round(window.scrollY + window.innerHeight / 2 - 40),
+    };
+    try {
+      const updated = await updateReminder(id, {
+        positionMode: 'free',
+        pagePosition: center,
+        offsetX: undefined,
+        offsetY: undefined,
+      });
+      if (!updated) return;
+      const rendered = this.rendered.get(id);
+      if (rendered) {
+        rendered.reminder = updated;
+        this.positionOne(rendered);
+        this.pulse(rendered);
+      } else if (updated.enabled) {
+        this.renderReminder(updated);
+      }
+    } catch (error) {
+      log.error('Failed to recenter reminder', error);
+    }
   }
 
   async reload(page: PageIdentity): Promise<void> {

@@ -4,6 +4,7 @@ export type Message =
   | { type: 'START_ADD_MODE' }
   | { type: 'ADD_FROM_SELECTION'; payload: { text: string } }
   | { type: 'FOCUS_REMINDER'; payload: { id: string } }
+  | { type: 'RECENTER_REMINDER'; payload: { id: string } }
   | { type: 'PING' };
 
 export interface PingResponse {
