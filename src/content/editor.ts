@@ -69,7 +69,16 @@ export class ReminderEditor {
     this.clampToViewport();
     const textarea = this.container.querySelector('textarea');
     textarea?.focus();
+    // Close when clicking anywhere outside the editor. Deferred a tick so the
+    // click that opened the editor doesn't immediately close it.
+    setTimeout(() => document.addEventListener('mousedown', this.onOutside, true), 0);
   }
+
+  private onOutside = (event: MouseEvent) => {
+    if (!event.composedPath().includes(this.container)) {
+      this.options.onCancel();
+    }
+  };
 
   /** Ensures the whole editor (including its action buttons) stays within the
    *  viewport after it renders at its natural height. */
@@ -362,6 +371,7 @@ export class ReminderEditor {
   }
 
   destroy(): void {
+    document.removeEventListener('mousedown', this.onOutside, true);
     this.container.remove();
   }
 }

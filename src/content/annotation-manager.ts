@@ -361,7 +361,7 @@ export class AnnotationManager {
 
     this.overlay.append(menu);
     const closeMenu = (event: MouseEvent) => {
-      if (!menu.contains(event.target as Node)) {
+      if (!event.composedPath().includes(menu)) {
         menu.remove();
         document.removeEventListener('mousedown', closeMenu, true);
       }
