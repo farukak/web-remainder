@@ -50,6 +50,17 @@ export function isSupportedUrl(rawUrl: string | undefined): boolean {
   return /^https?:\/\//i.test(rawUrl);
 }
 
+/** True while the content script still has a live connection to the extension.
+ *  Becomes false after the extension is reloaded/updated, at which point
+ *  chrome.* calls throw "Extension context invalidated". */
+export function isContextValid(): boolean {
+  try {
+    return Boolean(chrome?.runtime?.id);
+  } catch {
+    return false;
+  }
+}
+
 export function debounce<A extends unknown[]>(
   fn: (...args: A) => void,
   wait: number,
