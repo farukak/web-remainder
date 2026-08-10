@@ -64,7 +64,7 @@ export const SHADOW_STYLES = /* css */ `
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity 0.12s ease;
 }
 .wr-reminder:hover .wr-menu-btn {
@@ -72,6 +72,11 @@ export const SHADOW_STYLES = /* css */ `
 }
 .wr-menu-btn:hover {
   background: #fff;
+}
+.wr-shape-heart,
+.wr-shape-star,
+.wr-shape-cloud {
+  text-align: center;
 }
 
 /* --- Shapes --- */

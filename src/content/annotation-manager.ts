@@ -82,9 +82,9 @@ export class AnnotationManager {
     node.className = `wr-reminder wr-shape-${s.shape}`;
 
     const padByShape: Record<string, string> = {
-      heart: '22px 26px 34px',
-      star: '30px 26px',
-      cloud: '24px 32px',
+      heart: '26px 38px 44px',
+      star: '36px 36px 42px',
+      cloud: '30px 54px',
     };
     Object.assign(node.style, {
       fontFamily: s.fontFamily,
