@@ -4,8 +4,7 @@ import {
   type ResolvedAnchor,
 } from './anchor-resolver';
 import { ReminderEditor } from './editor';
-import { computePosition } from './positioning';
-import { SelectionManager, type PickResult } from './selection-manager';
+import { computePosition, type Point } from './positioning';
 import { SHADOW_STYLES } from './styles';
 import { ROOT_ID } from '../shared/constants';
 import {
@@ -15,12 +14,13 @@ import {
   getSettings,
   updateReminder,
 } from '../shared/storage';
-import type { PageIdentity, Reminder, Settings } from '../shared/types';
+import type { PageIdentity, Reminder, ReminderStyle, Settings } from '../shared/types';
 import { generateId, log, now, throttle } from '../shared/utils';
 
 interface Rendered {
   reminder: Reminder;
   node: HTMLDivElement;
+  bgEl: HTMLDivElement;
   textEl: HTMLSpanElement;
   resolution: ResolvedAnchor;
 }
@@ -32,7 +32,6 @@ export class AnnotationManager {
   private host: HTMLDivElement;
   private shadow: ShadowRoot;
   private overlay: HTMLDivElement;
-  private selection: SelectionManager;
   private editor: ReminderEditor | null = null;
   private rendered = new Map<string, Rendered>();
   private page: PageIdentity;
@@ -53,7 +52,6 @@ export class AnnotationManager {
     this.shadow.append(this.overlay);
 
     document.documentElement.append(this.host);
-    this.selection = new SelectionManager(this.shadow, this.overlay);
   }
 
   async init(): Promise<void> {
@@ -79,27 +77,43 @@ export class AnnotationManager {
   }
 
   private applyStyle(rendered: Rendered): void {
-    const { node, reminder } = rendered;
+    const { node, bgEl, reminder } = rendered;
     const s = reminder.style;
+    node.className = `wr-reminder wr-shape-${s.shape}`;
+
+    const padByShape: Record<string, string> = {
+      heart: '22px 26px 34px',
+      star: '30px 26px',
+      cloud: '24px 32px',
+    };
     Object.assign(node.style, {
       fontFamily: s.fontFamily,
       fontSize: `${s.fontSize}px`,
       fontWeight: String(s.fontWeight),
       color: s.color,
-      backgroundColor: s.backgroundColor,
       opacity: String(s.opacity),
-      borderRadius: `${s.borderRadius}px`,
-      padding: `${s.padding}px`,
+      padding: padByShape[s.shape] ?? `${s.padding}px`,
       width: s.width ? `${s.width}px` : '',
     });
+
+    bgEl.style.backgroundColor = s.backgroundColor;
+    bgEl.style.setProperty('--wr-bg', s.backgroundColor);
+    bgEl.style.borderRadius =
+      s.shape === 'rounded'
+        ? `${s.borderRadius}px`
+        : s.shape === 'rectangle'
+          ? '0'
+          : '';
   }
 
   private renderReminder(reminder: Reminder): void {
     this.removeNode(reminder.id);
 
     const node = document.createElement('div');
-    node.className = 'wr-reminder';
     node.setAttribute('role', 'note');
+
+    const bgEl = document.createElement('div');
+    bgEl.className = 'wr-reminder-bg';
 
     const textEl = document.createElement('span');
     textEl.className = 'wr-reminder-text';
@@ -111,11 +125,11 @@ export class AnnotationManager {
     menuBtn.textContent = '⋮';
     menuBtn.setAttribute('aria-label', 'Reminder options');
 
-    node.append(textEl, menuBtn);
+    node.append(bgEl, textEl, menuBtn);
     this.overlay.append(node);
 
     const resolution = resolveAnchor(reminder.anchor);
-    const rendered: Rendered = { reminder, node, textEl, resolution };
+    const rendered: Rendered = { reminder, node, bgEl, textEl, resolution };
     this.rendered.set(reminder.id, rendered);
     this.applyStyle(rendered);
 
@@ -145,22 +159,31 @@ export class AnnotationManager {
   }
 
   private positionOne(rendered: Rendered): void {
-    const rect = this.currentRect(rendered);
-    if (!rect) {
-      rendered.node.style.display = 'none';
+    const { reminder, node } = rendered;
+
+    if (reminder.positionMode === 'free' && reminder.pagePosition) {
+      node.style.display = '';
+      node.style.left = `${reminder.pagePosition.x - window.scrollX}px`;
+      node.style.top = `${reminder.pagePosition.y - window.scrollY}px`;
       return;
     }
-    rendered.node.style.display = '';
+
+    const rect = this.currentRect(rendered);
+    if (!rect) {
+      node.style.display = 'none';
+      return;
+    }
+    node.style.display = '';
     const size = {
-      width: rendered.node.offsetWidth || 120,
-      height: rendered.node.offsetHeight || 40,
+      width: node.offsetWidth || 120,
+      height: node.offsetHeight || 40,
     };
     const point = computePosition(rect, size, {
-      x: rendered.reminder.offsetX,
-      y: rendered.reminder.offsetY,
+      x: reminder.offsetX,
+      y: reminder.offsetY,
     });
-    rendered.node.style.left = `${point.left}px`;
-    rendered.node.style.top = `${point.top}px`;
+    node.style.left = `${point.left}px`;
+    node.style.top = `${point.top}px`;
   }
 
   reposition = throttle(() => {
@@ -171,6 +194,7 @@ export class AnnotationManager {
    *  SPA content). Cheap: only touches currently-lost reminders. */
   retryUnresolved = throttle(() => {
     for (const rendered of this.rendered.values()) {
+      if (rendered.reminder.positionMode === 'free') continue;
       if (!this.currentRect(rendered)) {
         rendered.resolution = resolveAnchor(rendered.reminder.anchor);
         this.positionOne(rendered);
@@ -178,39 +202,71 @@ export class AnnotationManager {
     }
   }, 400);
 
+  /** '+ Add Reminder': open the editor immediately (no page picking) and place
+   *  the saved note as a free, draggable annotation near the viewport centre. */
   startAddMode(prefillText = ''): void {
-    if (this.editor) this.closeEditor();
-    this.selection.start(
-      (pick) => this.openEditorForCreate(pick, prefillText),
-      () => {},
-    );
+    const position: Point = {
+      left: window.innerWidth / 2 - 160,
+      top: window.innerHeight / 2 - 140,
+    };
+    this.openEditorForNew(position, prefillText, (text, style) => ({
+      id: generateId(),
+      text,
+      page: this.page,
+      matchMode: this.settings.defaultMatchMode,
+      anchor: { type: 'free' },
+      style,
+      positionMode: 'free',
+      pagePosition: {
+        x: window.scrollX + window.innerWidth / 2 - 80,
+        y: window.scrollY + window.innerHeight / 2 - 40,
+      },
+      createdAt: now(),
+      updatedAt: now(),
+      enabled: true,
+    }));
   }
 
-  /** Context-menu entry: annotate the current selection directly, prefilling
-   *  the editor with the selected text. Falls back to pick mode if the
-   *  selection was lost. */
+  /** Context-menu entry: anchor the note to the current text selection and
+   *  prefill the editor with the selected text. Falls back to a free note. */
   addFromCurrentSelection(prefillText: string): void {
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed && selection.toString().trim()) {
       const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       const anchor = buildAnchorFromRange(range);
-      this.openEditorForCreate({ anchor, rect, text: '' }, prefillText);
+      this.openEditorForNew(this.editorPosition(rect), prefillText, (text, style) => ({
+        id: generateId(),
+        text,
+        page: this.page,
+        matchMode: this.settings.defaultMatchMode,
+        anchor,
+        style,
+        positionMode: 'anchored',
+        createdAt: now(),
+        updatedAt: now(),
+        enabled: true,
+      }));
       return;
     }
     this.startAddMode(prefillText);
   }
 
-  private editorPosition(rect: DOMRect) {
+  private editorPosition(rect: DOMRect): Point {
     return computePosition(rect, { width: 320, height: 320 });
   }
 
-  private openEditorForCreate(pick: PickResult, prefillText: string): void {
+  private openEditorForNew(
+    position: Point,
+    prefillText: string,
+    build: (text: string, style: ReminderStyle) => Reminder,
+  ): void {
+    if (this.editor) this.closeEditor();
     this.editor = new ReminderEditor(this.shadow, {
       title: 'New reminder',
       initialText: prefillText,
       initialStyle: this.settings.defaultStyle,
-      position: this.editorPosition(pick.rect),
+      position,
       showDelete: false,
       onCancel: () => this.closeEditor(),
       onSave: async ({ text, style }) => {
@@ -218,18 +274,7 @@ export class AnnotationManager {
           this.closeEditor();
           return;
         }
-        const reminder: Reminder = {
-          id: generateId(),
-          text,
-          page: this.page,
-          matchMode: this.settings.defaultMatchMode,
-          anchor: pick.anchor,
-          style,
-          positionMode: 'anchored',
-          createdAt: now(),
-          updatedAt: now(),
-          enabled: true,
-        };
+        const reminder = build(text, style);
         try {
           await createReminder(reminder);
           this.closeEditor();
@@ -358,14 +403,30 @@ export class AnnotationManager {
           this.openEditorForEdit(rendered);
           return;
         }
+
+        const finalLeft = parseFloat(node.style.left);
+        const finalTop = parseFloat(node.style.top);
+
+        if (rendered.reminder.positionMode === 'free') {
+          const pagePosition = {
+            x: Math.round(finalLeft + window.scrollX),
+            y: Math.round(finalTop + window.scrollY),
+          };
+          try {
+            const updated = await updateReminder(rendered.reminder.id, { pagePosition });
+            if (updated) rendered.reminder = updated;
+          } catch (error) {
+            log.error('Failed to persist position', error);
+          }
+          return;
+        }
+
         const anchorRect = this.currentRect(rendered);
         if (!anchorRect) return;
         const base = computePosition(anchorRect, {
           width: node.offsetWidth,
           height: node.offsetHeight,
         });
-        const finalLeft = parseFloat(node.style.left);
-        const finalTop = parseFloat(node.style.top);
         const offsetX = Math.round(finalLeft - base.left);
         const offsetY = Math.round(finalTop - base.top);
         try {
@@ -417,10 +478,17 @@ export class AnnotationManager {
   focusReminder(id: string): void {
     const rendered = this.rendered.get(id);
     if (!rendered) return;
-    const target =
-      rendered.resolution.range?.startContainer.parentElement ??
-      rendered.resolution.element;
-    target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (rendered.reminder.positionMode === 'free' && rendered.reminder.pagePosition) {
+      window.scrollTo({
+        top: Math.max(0, rendered.reminder.pagePosition.y - window.innerHeight / 2),
+        behavior: 'smooth',
+      });
+    } else {
+      const target =
+        rendered.resolution.range?.startContainer.parentElement ??
+        rendered.resolution.element;
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     setTimeout(() => {
       this.positionOne(rendered);
       rendered.node.classList.add('wr-focus');
@@ -441,7 +509,6 @@ export class AnnotationManager {
   destroy(): void {
     window.removeEventListener('scroll', this.reposition, true);
     window.removeEventListener('resize', this.reposition);
-    this.selection.stop();
     this.closeEditor();
     this.host.remove();
   }

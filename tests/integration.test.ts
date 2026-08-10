@@ -101,4 +101,23 @@ describe('core loop', () => {
     await manager.init();
     expect(shadowText()).toHaveLength(0);
   });
+
+  it('renders a free (anchorless) reminder by page position', async () => {
+    const free: Reminder = {
+      ...reminderFor('f', '#para'),
+      anchor: { type: 'free' },
+      positionMode: 'free',
+      pagePosition: { x: 200, y: 150 },
+    };
+    await createReminder(free);
+    manager = new AnnotationManager(pageIdentityFromUrl(location.href));
+    await manager.init();
+    expect(shadowText()).toContain('note f');
+    const node = document
+      .getElementById(ROOT_ID)!
+      .shadowRoot!.querySelector<HTMLElement>('.wr-reminder')!;
+    expect(node.style.display).not.toBe('none');
+    expect(node.style.left).toBe('200px');
+    expect(node.style.top).toBe('150px');
+  });
 });
