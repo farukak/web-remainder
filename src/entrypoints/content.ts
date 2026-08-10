@@ -3,7 +3,7 @@ import { AnnotationManager } from '../content/annotation-manager';
 import { startPageWatcher } from '../content/mutation-observer';
 import type { Message, PingResponse } from '../shared/messages';
 import { subscribe } from '../shared/storage';
-import { isSupportedUrl, pageIdentityFromUrl } from '../shared/utils';
+import { isContextValid, isSupportedUrl, pageIdentityFromUrl } from '../shared/utils';
 
 export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
@@ -14,17 +14,45 @@ export default defineContentScript({
     const manager = new AnnotationManager(pageIdentityFromUrl(location.href));
     void manager.init();
 
-    const stopWatcher = startPageWatcher({
-      onUrlChange: (url) => void manager.reload(pageIdentityFromUrl(url)),
-      onDomChange: () => {
-        manager.reposition();
-        manager.retryUnresolved();
-      },
+    let stopWatcher = () => {};
+    let unsubscribe = () => {};
+    let torndown = false;
+
+    // Once the extension is reloaded/updated this stale content script loses its
+    // connection ("Extension context invalidated"). Shut everything down so it
+    // stops running and stops throwing on every navigation/DOM change.
+    const teardown = () => {
+      if (torndown) return;
+      torndown = true;
+      try {
+        stopWatcher();
+        unsubscribe();
+        manager.destroy();
+      } catch {
+        // context already gone; nothing more to clean up
+      }
+    };
+
+    const guard = (fn: () => void) => {
+      if (!isContextValid()) {
+        teardown();
+        return;
+      }
+      fn();
+    };
+
+    stopWatcher = startPageWatcher({
+      onUrlChange: (url) => guard(() => void manager.reload(pageIdentityFromUrl(url))),
+      onDomChange: () =>
+        guard(() => {
+          manager.reposition();
+          manager.retryUnresolved();
+        }),
     });
 
-    const unsubscribe = subscribe(() => {
-      void manager.reload(pageIdentityFromUrl(location.href));
-    });
+    unsubscribe = subscribe(() =>
+      guard(() => void manager.reload(pageIdentityFromUrl(location.href))),
+    );
 
     chrome.runtime.onMessage.addListener((message: Message, _sender, sendResponse) => {
       switch (message.type) {
@@ -36,6 +64,9 @@ export default defineContentScript({
           return false;
         case 'FOCUS_REMINDER':
           manager.focusReminder(message.payload.id);
+          return false;
+        case 'RECENTER_REMINDER':
+          void manager.recenterReminder(message.payload.id);
           return false;
         case 'PING':
           sendResponse({
@@ -49,10 +80,6 @@ export default defineContentScript({
       }
     });
 
-    window.addEventListener('pagehide', () => {
-      stopWatcher();
-      unsubscribe();
-      manager.destroy();
-    });
+    window.addEventListener('pagehide', teardown);
   },
 });

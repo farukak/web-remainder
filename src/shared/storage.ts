@@ -6,7 +6,7 @@ import type {
   Settings,
   StorageShape,
 } from './types';
-import { log, now, pageMatches } from './utils';
+import { isContextValid, log, now, pageMatches } from './utils';
 
 function emptyState(): StorageShape {
   return {
@@ -45,7 +45,7 @@ export async function readState(): Promise<StorageShape> {
     };
     return migrate(merged);
   } catch (error) {
-    log.error('Failed to read storage', error);
+    if (isContextValid()) log.error('Failed to read storage', error);
     return emptyState();
   }
 }

@@ -81,18 +81,12 @@ export class AnnotationManager {
     const s = reminder.style;
     node.className = `wr-reminder wr-shape-${s.shape}`;
 
-    const padByShape: Record<string, string> = {
-      heart: '26px 38px 44px',
-      star: '36px 36px 42px',
-      cloud: '30px 54px',
-    };
     Object.assign(node.style, {
       fontFamily: s.fontFamily,
       fontSize: `${s.fontSize}px`,
       fontWeight: String(s.fontWeight),
       color: s.color,
       opacity: String(s.opacity),
-      padding: padByShape[s.shape] ?? `${s.padding}px`,
       width: s.width ? `${s.width}px` : '',
     });
 
@@ -104,6 +98,11 @@ export class AnnotationManager {
         : s.shape === 'rectangle'
           ? '0'
           : '';
+
+    // Masked shapes (heart/star/cloud) get their padding and text column width
+    // from CSS so the shape stays large enough to contain the text.
+    const masked = s.shape === 'heart' || s.shape === 'star' || s.shape === 'cloud';
+    node.style.padding = masked ? '' : `${s.padding}px`;
   }
 
   private renderReminder(reminder: Reminder): void {
@@ -456,9 +455,6 @@ export class AnnotationManager {
   }
 
   private async deleteReminder(id: string): Promise<void> {
-    if (this.settings.confirmBeforeDelete && !window.confirm('Delete this reminder?')) {
-      return;
-    }
     try {
       await deleteReminder(id);
       this.removeNode(id);
@@ -491,9 +487,41 @@ export class AnnotationManager {
     }
     setTimeout(() => {
       this.positionOne(rendered);
-      rendered.node.classList.add('wr-focus');
-      setTimeout(() => rendered.node.classList.remove('wr-focus'), 1900);
+      this.pulse(rendered);
     }, 300);
+  }
+
+  private pulse(rendered: Rendered): void {
+    rendered.node.classList.add('wr-focus');
+    setTimeout(() => rendered.node.classList.remove('wr-focus'), 1900);
+  }
+
+  /** Moves a reminder back to the centre of the current viewport (as a free,
+   *  draggable note) — used to recover a note dragged off-screen. */
+  async recenterReminder(id: string): Promise<void> {
+    const center = {
+      x: Math.round(window.scrollX + window.innerWidth / 2 - 80),
+      y: Math.round(window.scrollY + window.innerHeight / 2 - 40),
+    };
+    try {
+      const updated = await updateReminder(id, {
+        positionMode: 'free',
+        pagePosition: center,
+        offsetX: undefined,
+        offsetY: undefined,
+      });
+      if (!updated) return;
+      const rendered = this.rendered.get(id);
+      if (rendered) {
+        rendered.reminder = updated;
+        this.positionOne(rendered);
+        this.pulse(rendered);
+      } else if (updated.enabled) {
+        this.renderReminder(updated);
+      }
+    } catch (error) {
+      log.error('Failed to recenter reminder', error);
+    }
   }
 
   async reload(page: PageIdentity): Promise<void> {

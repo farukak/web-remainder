@@ -1,8 +1,30 @@
 import { useEffect, useState } from 'react';
 import { sendToActiveTab } from '../../shared/messages';
-import { getPageReminders } from '../../shared/storage';
+import { deleteReminder, getPageReminders } from '../../shared/storage';
 import type { PageIdentity, Reminder } from '../../shared/types';
 import { isSupportedUrl, pageIdentityFromUrl, relativeTime } from '../../shared/utils';
+
+function CenterIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <circle cx="12" cy="12" r="6.5" />
+      <line x1="12" y1="1.5" x2="12" y2="4.5" />
+      <line x1="12" y1="19.5" x2="12" y2="22.5" />
+      <line x1="1.5" y1="12" x2="4.5" y2="12" />
+      <line x1="19.5" y1="12" x2="22.5" y2="12" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M6 6l1 14h10l1-14" />
+    </svg>
+  );
+}
 
 export function App() {
   const [loading, setLoading] = useState(true);
@@ -33,6 +55,16 @@ export function App() {
   const focus = async (id: string) => {
     await sendToActiveTab({ type: 'FOCUS_REMINDER', payload: { id } });
     window.close();
+  };
+
+  const recenter = async (id: string) => {
+    await sendToActiveTab({ type: 'RECENTER_REMINDER', payload: { id } });
+    window.close();
+  };
+
+  const remove = async (id: string) => {
+    await deleteReminder(id);
+    if (page) setReminders(await getPageReminders(page));
   };
 
   const openDashboard = () => {
@@ -72,11 +104,29 @@ export function App() {
           {reminders.length > 0 && (
             <ul className="list">
               {reminders.map((r) => (
-                <li key={r.id}>
+                <li key={r.id} className="list-row">
                   <button className="list-item" onClick={() => focus(r.id)}>
                     <span className="list-text">{r.text || '(empty)'}</span>
                     <span className="list-time">{relativeTime(r.updatedAt)}</span>
                   </button>
+                  <div className="list-actions">
+                    <button
+                      className="icon-btn"
+                      title="Bring to center"
+                      aria-label="Bring to center"
+                      onClick={() => recenter(r.id)}
+                    >
+                      <CenterIcon />
+                    </button>
+                    <button
+                      className="icon-btn danger"
+                      title="Delete"
+                      aria-label="Delete"
+                      onClick={() => remove(r.id)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
