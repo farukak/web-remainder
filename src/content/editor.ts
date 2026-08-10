@@ -94,6 +94,14 @@ export class ReminderEditor {
       placeholder: 'Write your reminder…',
       ariaLabel: 'Reminder text',
     });
+    const autoGrow = () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 260)}px`;
+    };
+    textarea.addEventListener('input', autoGrow);
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(autoGrow);
+    }
 
     const font = selectField('Font', FONT_FAMILIES, initialStyle.fontFamily);
     const size = selectField('Size', FONT_SIZES, initialStyle.fontSize);
