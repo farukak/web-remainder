@@ -77,15 +77,26 @@ export function App() {
     window.close();
   };
 
+  const iconUrl = chrome.runtime.getURL('icons/48.png');
+
   return (
     <div className="popup">
       <header className="popup-header">
-        <span className="logo-dot" aria-hidden="true" />
-        <h1>Web Remainder</h1>
+        <img className="logo" src={iconUrl} alt="" width={30} height={30} />
+        <div className="brand-text">
+          <h1>Web Remainder</h1>
+          <p className="tagline">Sticky reminders for any page</p>
+        </div>
       </header>
 
       {!supported ? (
-        <p className="empty">Web Remainder isn&apos;t available on this page.</p>
+        <div className="state">
+          <p className="state-title">Not available here</p>
+          <p className="empty">
+            Web Remainder works on regular websites (http/https). Open any page to start
+            adding reminders.
+          </p>
+        </div>
       ) : loading ? (
         <p className="empty">Loading…</p>
       ) : (
@@ -100,6 +111,13 @@ export function App() {
           <button className="btn primary block" onClick={addReminder}>
             + Add Reminder
           </button>
+
+          {reminders.length === 0 && (
+            <p className="empty small">
+              No reminders on this page yet. Click “+ Add Reminder”, or right-click any
+              text and choose “Add to Web Remainder”.
+            </p>
+          )}
 
           {reminders.length > 0 && (
             <ul className="list">
@@ -135,12 +153,22 @@ export function App() {
       )}
 
       <footer className="popup-footer">
-        <button className="link" onClick={openDashboard}>
-          Open Dashboard
-        </button>
-        <button className="link" onClick={openSettings}>
-          Settings
-        </button>
+        <div className="footer-links">
+          <button className="link" onClick={openDashboard}>
+            Open Dashboard
+          </button>
+          <button className="link" onClick={openSettings}>
+            Settings
+          </button>
+        </div>
+        <a
+          className="credit"
+          href="https://github.com/farukak/web-remainder"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Made by Faruk AK
+        </a>
       </footer>
     </div>
   );
