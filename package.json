@@ -18,6 +18,7 @@
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
     "icons": "node scripts/generate-icons.mjs",
+    "store:assets": "node scripts/generate-store-assets.mjs",
     "compile": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
