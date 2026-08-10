@@ -57,10 +57,37 @@ its one and only purpose.
 
 https://github.com/farukak/web-remainder/blob/main/docs/privacy-policy.md
 
-## Assets still needed before submission (manual)
+## Assets
 
-- 1280×800 (or 640×400) screenshots of: a reminder on a page, the popup, and the
-  dashboard.
-- Optional 440×280 small promo tile.
+Store-ready promotional screenshots (1280×800) live in `docs/store/`:
 
-(The extension icon is included at 16/32/48/128 px.)
+- `screenshot-1-annotate.png` — reminders shown on a web page
+- `screenshot-2-editor.png` — the editor with palettes, shapes and templates
+- `screenshot-3-dashboard.png` — the management dashboard
+
+Regenerate them with `npm run store:assets`. These are clean promo mockups;
+you may swap in real captures from the loaded extension for extra authenticity.
+
+The extension icon is included at 16/32/48/128 px (`npm run icons`).
+
+## Packaging
+
+Build the upload zip with:
+
+```bash
+npm run zip
+```
+
+This produces `.output/web-remainder-1.0.0-chrome.zip`, ready to upload in the
+Chrome Web Store Developer Dashboard.
+
+## Submission checklist
+
+- [x] Manifest V3, single purpose, minimum permissions
+- [x] Icon 128×128
+- [x] At least one 1280×800 screenshot
+- [x] Detailed description and short description
+- [x] Privacy policy URL
+- [x] Permission justifications
+- [ ] Upload `web-remainder-1.0.0-chrome.zip` and complete the data-use
+      disclosures in the Developer Dashboard
