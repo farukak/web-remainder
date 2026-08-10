@@ -77,6 +77,30 @@ export const SHADOW_STYLES = /* css */ `
 .wr-shape-star,
 .wr-shape-cloud {
   text-align: center;
+  max-width: none;
+}
+.wr-shape-heart .wr-reminder-text,
+.wr-shape-star .wr-reminder-text,
+.wr-shape-cloud .wr-reminder-text {
+  display: inline-block;
+}
+.wr-shape-heart {
+  padding: 26px 40px 56px;
+}
+.wr-shape-heart .wr-reminder-text {
+  max-width: 150px;
+}
+.wr-shape-star {
+  padding: 46px 86px;
+}
+.wr-shape-star .wr-reminder-text {
+  max-width: 110px;
+}
+.wr-shape-cloud {
+  padding: 30px 54px;
+}
+.wr-shape-cloud .wr-reminder-text {
+  max-width: 180px;
 }
 
 /* --- Shapes --- */

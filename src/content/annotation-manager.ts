@@ -81,18 +81,12 @@ export class AnnotationManager {
     const s = reminder.style;
     node.className = `wr-reminder wr-shape-${s.shape}`;
 
-    const padByShape: Record<string, string> = {
-      heart: '26px 38px 44px',
-      star: '36px 36px 42px',
-      cloud: '30px 54px',
-    };
     Object.assign(node.style, {
       fontFamily: s.fontFamily,
       fontSize: `${s.fontSize}px`,
       fontWeight: String(s.fontWeight),
       color: s.color,
       opacity: String(s.opacity),
-      padding: padByShape[s.shape] ?? `${s.padding}px`,
       width: s.width ? `${s.width}px` : '',
     });
 
@@ -104,6 +98,11 @@ export class AnnotationManager {
         : s.shape === 'rectangle'
           ? '0'
           : '';
+
+    // Masked shapes (heart/star/cloud) get their padding and text column width
+    // from CSS so the shape stays large enough to contain the text.
+    const masked = s.shape === 'heart' || s.shape === 'star' || s.shape === 'cloud';
+    node.style.padding = masked ? '' : `${s.padding}px`;
   }
 
   private renderReminder(reminder: Reminder): void {
@@ -456,9 +455,6 @@ export class AnnotationManager {
   }
 
   private async deleteReminder(id: string): Promise<void> {
-    if (this.settings.confirmBeforeDelete && !window.confirm('Delete this reminder?')) {
-      return;
-    }
     try {
       await deleteReminder(id);
       this.removeNode(id);
