@@ -358,7 +358,53 @@ export class AnnotationManager {
 
     addItem('Edit', () => this.openEditorForEdit(rendered));
     addItem('Disable', () => void this.disableReminder(rendered.reminder.id));
-    addItem('Delete', () => void this.deleteReminder(rendered.reminder.id));
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'wr-btn wr-btn-ghost';
+    del.textContent = 'Delete';
+    Object.assign(del.style, {
+      display: 'block',
+      width: '100%',
+      textAlign: 'left',
+      border: 'none',
+      padding: '6px 8px',
+      color: '#dc2626',
+    });
+    del.addEventListener('click', () => {
+      if (!this.settings.confirmBeforeDelete) {
+        menu.remove();
+        void this.deleteReminder(rendered.reminder.id);
+        return;
+      }
+      menu.replaceChildren();
+      const question = document.createElement('div');
+      question.textContent = 'Delete this reminder?';
+      Object.assign(question.style, { padding: '8px', fontSize: '13px' });
+      const row = document.createElement('div');
+      Object.assign(row.style, {
+        display: 'flex',
+        gap: '6px',
+        justifyContent: 'flex-end',
+        padding: '0 6px 6px',
+      });
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'wr-btn wr-btn-ghost';
+      cancel.textContent = 'Cancel';
+      cancel.addEventListener('click', () => menu.remove());
+      const confirm = document.createElement('button');
+      confirm.type = 'button';
+      confirm.className = 'wr-btn wr-btn-danger';
+      confirm.textContent = 'Delete';
+      confirm.addEventListener('click', () => {
+        menu.remove();
+        void this.deleteReminder(rendered.reminder.id);
+      });
+      row.append(cancel, confirm);
+      menu.append(question, row);
+    });
+    menu.append(del);
 
     this.overlay.append(menu);
     const closeMenu = (event: MouseEvent) => {
@@ -456,9 +502,6 @@ export class AnnotationManager {
   }
 
   private async deleteReminder(id: string): Promise<void> {
-    if (this.settings.confirmBeforeDelete && !window.confirm('Delete this reminder?')) {
-      return;
-    }
     try {
       await deleteReminder(id);
       this.removeNode(id);
