@@ -11,19 +11,23 @@ body {
 .popup-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 14px;
 }
-.popup-header h1 {
+.popup-header .logo {
+  border-radius: 7px;
+  flex: none;
+}
+.brand-text h1 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  line-height: 1.2;
 }
-.logo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
-  background: var(--wr-primary);
+.tagline {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--wr-muted);
 }
 
 .page-row {
@@ -45,6 +49,19 @@ body {
   color: var(--wr-muted);
   font-size: 13px;
   padding: 8px 0 16px;
+}
+.empty.small {
+  padding: 12px 0 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.state {
+  padding: 6px 0 12px;
+}
+.state-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .list {
@@ -116,9 +133,22 @@ body {
 }
 
 .popup-footer {
-  display: flex;
-  justify-content: space-between;
   margin-top: 14px;
   padding-top: 10px;
   border-top: 1px solid var(--wr-border);
+}
+.footer-links {
+  display: flex;
+  justify-content: space-between;
+}
+.credit {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--wr-muted);
+  text-decoration: none;
+  text-align: center;
+}
+.credit:hover {
+  color: var(--wr-primary);
 }
