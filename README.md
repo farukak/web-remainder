@@ -33,6 +33,12 @@ every time you come back — all stored locally on your device.
 - **Import / export** — back up and restore all data as validated JSON.
 - **Local only** — no backend, no account, no analytics, no tracking.
 
+## Screenshots
+
+| Reminders on a page | Editor | Dashboard |
+| --- | --- | --- |
+| ![Reminders shown on a web page](docs/store/screenshot-1-annotate.png) | ![Editor with palettes, shapes and templates](docs/store/screenshot-2-editor.png) | ![Dashboard](docs/store/screenshot-3-dashboard.png) |
+
 ## Installation (from source)
 
 ```bash
