@@ -24,7 +24,7 @@ export const FONT_WEIGHTS = [400, 500, 600, 700] as const;
 
 export const DEFAULT_STYLE: ReminderStyle = {
   fontFamily: 'Inter',
-  fontSize: 14,
+  fontSize: 16,
   fontWeight: 500,
   color: '#0f172a',
   backgroundColor: '#fef9c3',

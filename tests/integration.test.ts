@@ -5,6 +5,7 @@ import {
   clearAll,
   createReminder,
   deleteReminder,
+  getReminder,
   updateReminder,
 } from '../src/shared/storage';
 import type { Reminder } from '../src/shared/types';
@@ -99,6 +100,21 @@ describe('core loop', () => {
     await createReminder(other);
     manager = new AnnotationManager(pageIdentityFromUrl(location.href));
     await manager.init();
+    expect(shadowText()).toHaveLength(0);
+  });
+
+  it('deletes a reminder via the options menu', async () => {
+    await createReminder(reminderFor('d', '#para'));
+    manager = new AnnotationManager(pageIdentityFromUrl(location.href));
+    await manager.init();
+    const root = document.getElementById(ROOT_ID)!.shadowRoot!;
+    root.querySelector<HTMLButtonElement>('.wr-menu-btn')!.click();
+    const del = Array.from(
+      root.querySelectorAll<HTMLButtonElement>('.wr-menu button'),
+    ).find((b) => b.textContent === 'Delete')!;
+    del.click();
+    await new Promise((r) => setTimeout(r, 20));
+    expect(await getReminder('d')).toBeUndefined();
     expect(shadowText()).toHaveLength(0);
   });
 
