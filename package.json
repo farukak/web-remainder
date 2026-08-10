@@ -1,0 +1,50 @@
+{
+  "name": "web-remainder",
+  "version": "1.0.0",
+  "description": "Add persistent reminders and annotations to any webpage. Local-only, no account, no tracking.",
+  "type": "module",
+  "author": "Faruk AK (https://github.com/farukak)",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/farukak/web-remainder",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/farukak/web-remainder.git"
+  },
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "postinstall": "wxt prepare",
+    "compile": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run compile && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/chrome": "^0.0.287",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "@wxt-dev/module-react": "^1.1.3",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.15.0",
+    "jsdom": "^25.0.1",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5",
+    "wxt": "^0.19.13"
+  }
+}
