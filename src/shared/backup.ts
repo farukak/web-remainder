@@ -10,7 +10,7 @@ import type {
 } from './types';
 
 const MATCH_MODES: MatchMode[] = ['exact', 'path', 'domain'];
-const POSITION_MODES: PositionMode[] = ['anchored', 'offset'];
+const POSITION_MODES: PositionMode[] = ['anchored', 'offset', 'free'];
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -47,6 +47,17 @@ function sanitizePage(value: unknown): PageIdentity | null {
   }
 }
 
+const SHAPES: ReminderStyle['shape'][] = [
+  'rounded',
+  'rectangle',
+  'notepad',
+  'postit',
+  'bubble',
+  'cloud',
+  'heart',
+  'star',
+];
+
 function sanitizeStyle(value: unknown): ReminderStyle {
   const v = isObject(value) ? value : {};
   return {
@@ -59,12 +70,18 @@ function sanitizeStyle(value: unknown): ReminderStyle {
     borderRadius: num(v.borderRadius, DEFAULT_STYLE.borderRadius),
     padding: num(v.padding, DEFAULT_STYLE.padding),
     width: typeof v.width === 'number' ? v.width : undefined,
+    shape: SHAPES.includes(v.shape as ReminderStyle['shape'])
+      ? (v.shape as ReminderStyle['shape'])
+      : DEFAULT_STYLE.shape,
   };
 }
 
 function sanitizeAnchor(value: unknown): Anchor | null {
   if (!isObject(value)) return null;
-  const type = value.type === 'text' || value.type === 'element' ? value.type : null;
+  const type =
+    value.type === 'text' || value.type === 'element' || value.type === 'free'
+      ? value.type
+      : null;
   if (!type) return null;
   const anchor: Anchor = { type };
   if (typeof value.selector === 'string') anchor.selector = value.selector;
@@ -130,6 +147,12 @@ function sanitizeReminder(value: unknown): Reminder | null {
     positionMode,
     offsetX: typeof value.offsetX === 'number' ? value.offsetX : undefined,
     offsetY: typeof value.offsetY === 'number' ? value.offsetY : undefined,
+    pagePosition:
+      isObject(value.pagePosition) &&
+      typeof value.pagePosition.x === 'number' &&
+      typeof value.pagePosition.y === 'number'
+        ? { x: value.pagePosition.x, y: value.pagePosition.y }
+        : undefined,
     createdAt: num(value.createdAt, Date.now()),
     updatedAt: num(value.updatedAt, Date.now()),
     enabled: bool(value.enabled, true),

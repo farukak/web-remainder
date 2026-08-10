@@ -3,6 +3,12 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   srcDir: 'src',
   modules: ['@wxt-dev/module-react'],
+  vite: () => ({
+    // MV3 extension pages don't benefit from module preload hints, and the
+    // injected <link rel="modulepreload" crossorigin> triggers cross-world
+    // resource-mismatch warnings in Chrome. Disable the injection.
+    build: { modulePreload: false },
+  }),
   manifest: {
     name: 'Web Remainder',
     description:

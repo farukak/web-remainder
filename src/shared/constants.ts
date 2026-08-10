@@ -31,6 +31,7 @@ export const DEFAULT_STYLE: ReminderStyle = {
   opacity: 1,
   borderRadius: 8,
   padding: 10,
+  shape: 'rounded',
 };
 
 export const DEFAULT_SETTINGS: Settings = {

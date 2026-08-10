@@ -17,6 +17,7 @@
     "build:firefox": "wxt build -b firefox",
     "zip": "wxt zip",
     "postinstall": "wxt prepare",
+    "icons": "node scripts/generate-icons.mjs",
     "compile": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -43,6 +44,7 @@
     "globals": "^15.15.0",
     "jsdom": "^25.0.1",
     "prettier": "^3.3.3",
+    "sharp": "^0.33.5",
     "typescript": "^5.6.3",
     "vitest": "^2.1.5",
     "wxt": "^0.19.13"

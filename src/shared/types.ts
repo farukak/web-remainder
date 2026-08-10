@@ -1,8 +1,8 @@
 export type MatchMode = 'exact' | 'path' | 'domain';
 
-export type AnchorType = 'text' | 'element';
+export type AnchorType = 'text' | 'element' | 'free';
 
-export type PositionMode = 'anchored' | 'offset';
+export type PositionMode = 'anchored' | 'offset' | 'free';
 
 export interface PageIdentity {
   url: string;
@@ -38,6 +38,16 @@ export interface Anchor {
   };
 }
 
+export type ReminderShape =
+  | 'rounded'
+  | 'rectangle'
+  | 'notepad'
+  | 'postit'
+  | 'bubble'
+  | 'cloud'
+  | 'heart'
+  | 'star';
+
 export interface ReminderStyle {
   fontFamily: string;
   fontSize: number;
@@ -48,6 +58,7 @@ export interface ReminderStyle {
   borderRadius: number;
   padding: number;
   width?: number;
+  shape: ReminderShape;
 }
 
 export interface Reminder {
@@ -60,6 +71,7 @@ export interface Reminder {
   positionMode: PositionMode;
   offsetX?: number;
   offsetY?: number;
+  pagePosition?: { x: number; y: number };
   createdAt: number;
   updatedAt: number;
   enabled: boolean;

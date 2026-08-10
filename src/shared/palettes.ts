@@ -55,3 +55,41 @@ export const EMOJI_GROUPS: EmojiGroup[] = [
     ],
   },
 ];
+
+import type { ReminderShape } from './types';
+
+export interface ShapeOption {
+  id: ReminderShape;
+  label: string;
+  glyph: string;
+}
+
+export const SHAPES: ShapeOption[] = [
+  { id: 'rounded', label: 'Rounded', glyph: '▢' },
+  { id: 'rectangle', label: 'Square', glyph: '▭' },
+  { id: 'notepad', label: 'Notepad', glyph: '🗒️' },
+  { id: 'postit', label: 'Sticky', glyph: '📄' },
+  { id: 'bubble', label: 'Bubble', glyph: '💬' },
+  { id: 'cloud', label: 'Cloud', glyph: '☁️' },
+  { id: 'heart', label: 'Heart', glyph: '❤️' },
+  { id: 'star', label: 'Star', glyph: '⭐' },
+];
+
+export interface Template {
+  name: string;
+  shape: ReminderShape;
+  color: string;
+  backgroundColor: string;
+}
+
+/** One-tap looks that pair a shape with a matching palette. */
+export const TEMPLATES: Template[] = [
+  { name: 'Sticky', shape: 'postit', color: '#713f12', backgroundColor: '#fef08a' },
+  { name: 'Notebook', shape: 'notepad', color: '#1e293b', backgroundColor: '#f8fafc' },
+  { name: 'Idea', shape: 'bubble', color: '#0c4a6e', backgroundColor: '#e0f2fe' },
+  { name: 'Love', shape: 'heart', color: '#9f1239', backgroundColor: '#fecdd3' },
+  { name: 'Star', shape: 'star', color: '#713f12', backgroundColor: '#fde68a' },
+  { name: 'Cloud', shape: 'cloud', color: '#0c4a6e', backgroundColor: '#e0f2fe' },
+  { name: 'Warning', shape: 'rounded', color: '#7c2d12', backgroundColor: '#fed7aa' },
+  { name: 'Mint', shape: 'rounded', color: '#14532d', backgroundColor: '#bbf7d0' },
+];

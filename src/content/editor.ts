@@ -1,5 +1,5 @@
 import { FONT_FAMILIES, FONT_SIZES, FONT_WEIGHTS } from '../shared/constants';
-import { EMOJI_GROUPS, PALETTES } from '../shared/palettes';
+import { EMOJI_GROUPS, PALETTES, SHAPES, TEMPLATES } from '../shared/palettes';
 import type { ReminderStyle } from '../shared/types';
 import type { Point } from './positioning';
 
@@ -66,8 +66,24 @@ export class ReminderEditor {
   ) {
     this.container = this.build();
     this.root.append(this.container);
+    this.clampToViewport();
     const textarea = this.container.querySelector('textarea');
     textarea?.focus();
+  }
+
+  /** Ensures the whole editor (including its action buttons) stays within the
+   *  viewport after it renders at its natural height. */
+  private clampToViewport(): void {
+    const rect = this.container.getBoundingClientRect();
+    const gap = 12;
+    let top = parseFloat(this.container.style.top) || gap;
+    let left = parseFloat(this.container.style.left) || gap;
+    const maxTop = window.innerHeight - rect.height - gap;
+    const maxLeft = window.innerWidth - rect.width - gap;
+    top = Math.max(gap, Math.min(top, maxTop));
+    left = Math.max(gap, Math.min(left, maxLeft));
+    this.container.style.top = `${top}px`;
+    this.container.style.left = `${left}px`;
   }
 
   private build(): HTMLDivElement {
@@ -84,6 +100,7 @@ export class ReminderEditor {
     const weight = selectField('Weight', FONT_WEIGHTS, initialStyle.fontWeight);
     const color = colorField('Text', initialStyle.color);
     const bg = colorField('Background', initialStyle.backgroundColor);
+    let currentShape = initialStyle.shape;
 
     const opacity = el('input', {
       type: 'number',
@@ -187,6 +204,58 @@ export class ReminderEditor {
       paletteRow,
     ]);
 
+    // Shape picker.
+    const shapeRow = el('div', { className: 'wr-shape-row' });
+    const syncShapeButtons = () => {
+      shapeRow.querySelectorAll('.wr-shape-btn').forEach((b) => {
+        b.classList.toggle('active', (b as HTMLElement).dataset.shape === currentShape);
+      });
+    };
+    for (const shape of SHAPES) {
+      const btn = el('button', {
+        className: 'wr-shape-btn',
+        type: 'button',
+        title: shape.label,
+        textContent: shape.glyph,
+      });
+      btn.dataset.shape = shape.id;
+      btn.addEventListener('click', () => {
+        currentShape = shape.id;
+        syncShapeButtons();
+      });
+      shapeRow.append(btn);
+    }
+    syncShapeButtons();
+    const shapeSection = el('div', { className: 'wr-section' }, [
+      el('label', { className: 'wr-section-label', textContent: 'Shape' }),
+      shapeRow,
+    ]);
+
+    // One-tap templates (shape + palette).
+    const templateRow = el('div', { className: 'wr-template-row' });
+    for (const tpl of TEMPLATES) {
+      const btn = el('button', {
+        className: 'wr-template',
+        type: 'button',
+        title: tpl.name,
+        textContent: tpl.name,
+      });
+      btn.style.backgroundColor = tpl.backgroundColor;
+      btn.style.color = tpl.color;
+      btn.addEventListener('click', () => {
+        currentShape = tpl.shape;
+        color.input.value = tpl.color;
+        bg.input.value = tpl.backgroundColor;
+        syncShapeButtons();
+        applyPreview();
+      });
+      templateRow.append(btn);
+    }
+    const templateSection = el('div', { className: 'wr-section' }, [
+      el('label', { className: 'wr-section-label', textContent: 'Templates' }),
+      templateRow,
+    ]);
+
     const controls = el('div', { className: 'wr-controls' }, [
       font.field,
       size.field,
@@ -212,6 +281,7 @@ export class ReminderEditor {
         backgroundColor: bg.input.value,
         opacity: Number(opacity.value),
         borderRadius: Number(radius.value),
+        shape: currentShape,
       };
       this.options.onSave({ text: textarea.value, style });
     });
@@ -249,6 +319,8 @@ export class ReminderEditor {
         textarea,
         emojiSection,
         paletteSection,
+        shapeSection,
+        templateSection,
         controls,
         actions,
       ],
